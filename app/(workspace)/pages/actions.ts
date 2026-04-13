@@ -1,12 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
+import type { Page } from '@/types/database'
 
 export async function createPage(workspaceId: string, parentId?: string | null) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('No autenticado')
+  const supabase = await createServiceClient()
 
   const { data, error } = await supabase
     .from('pages')
@@ -16,8 +15,7 @@ export async function createPage(workspaceId: string, parentId?: string | null) 
       title: 'Sin titulo',
       content: [],
       is_favorite: false,
-      created_by: user.id,
-    })
+    } as any)
     .select()
     .single()
 
@@ -37,7 +35,7 @@ export async function updatePage(
     parent_id?: string | null
   }
 ) {
-  const supabase = await createClient()
+  const supabase = await createServiceClient()
   const { error } = await supabase
     .from('pages')
     .update(updates)
@@ -50,7 +48,7 @@ export async function updatePage(
 }
 
 export async function deletePage(pageId: string) {
-  const supabase = await createClient()
+  const supabase = await createServiceClient()
   const { error } = await supabase
     .from('pages')
     .delete()
@@ -59,4 +57,38 @@ export async function deletePage(pageId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/pages')
+}
+
+export async function fetchPages(workspaceId: string): Promise<Page[]> {
+  const supabase = await createServiceClient()
+  const { data, error } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data as Page[]
+}
+
+export async function fetchPage(pageId: string): Promise<Page> {
+  const supabase = await createServiceClient()
+  const { data, error } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('id', pageId)
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data as Page
+}
+
+export async function updatePageContent(pageId: string, content: unknown) {
+  const supabase = await createServiceClient()
+  const { error } = await supabase
+    .from('pages')
+    .update({ content })
+    .eq('id', pageId)
+
+  if (error) throw new Error(error.message)
 }

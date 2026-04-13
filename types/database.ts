@@ -19,7 +19,7 @@ export type Page = {
   icon: string | null
   content: unknown
   is_favorite: boolean
-  created_by: string
+  created_by: string | null
   created_at: string
   updated_at: string
 }

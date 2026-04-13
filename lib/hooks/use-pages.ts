@@ -1,8 +1,8 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useWorkspaceStore } from '@/lib/stores/workspace-store'
+import { fetchPages, fetchPage, updatePageContent } from '@/app/(workspace)/pages/actions'
 import type { Page } from '@/types/database'
 
 export function usePages() {
@@ -12,15 +12,7 @@ export function usePages() {
     queryKey: ['pages', workspace?.id],
     queryFn: async () => {
       if (!workspace) return []
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      return data as Page[]
+      return fetchPages(workspace.id)
     },
     enabled: !!workspace,
   })
@@ -29,17 +21,7 @@ export function usePages() {
 export function usePage(pageId: string) {
   return useQuery({
     queryKey: ['pages', pageId],
-    queryFn: async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('id', pageId)
-        .single()
-
-      if (error) throw error
-      return data as Page
-    },
+    queryFn: () => fetchPage(pageId),
   })
 }
 
@@ -54,13 +36,7 @@ export function useUpdatePageContent() {
       pageId: string
       content: unknown
     }) => {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('pages')
-        .update({ content })
-        .eq('id', pageId)
-
-      if (error) throw error
+      await updatePageContent(pageId, content)
     },
     onSuccess: (_, { pageId }) => {
       queryClient.invalidateQueries({ queryKey: ['pages', pageId] })
