@@ -75,6 +75,20 @@ export type ClientMetric = {
   created_at: string
 }
 
+export type Prompt = {
+  id: string
+  workspace_id: string
+  title: string
+  content: string
+  category: string
+  tags: string[]
+  variables: { name: string; description?: string }[]
+  version: number
+  parent_prompt_id: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
