@@ -49,6 +49,32 @@ export type Task = {
   updated_at: string
 }
 
+export type Client = {
+  id: string
+  workspace_id: string
+  name: string
+  ghl_location_id: string | null
+  ghl_api_key_encrypted: string | null
+  status: 'active' | 'onboarding' | 'paused' | 'churned'
+  mrr: number
+  notes: string | null
+  health_score: number
+  last_synced_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type ClientMetric = {
+  id: string
+  client_id: string
+  date: string
+  leads_count: number
+  appointments_count: number
+  no_show_count: number
+  revenue_generated: number
+  created_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
