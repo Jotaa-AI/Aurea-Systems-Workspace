@@ -24,6 +24,31 @@ export type Page = {
   updated_at: string
 }
 
+export type TaskBoard = {
+  id: string
+  workspace_id: string
+  name: string
+  columns: { id: string; title: string }[]
+  created_at: string
+}
+
+export type Task = {
+  id: string
+  workspace_id: string
+  board_id: string
+  title: string
+  description: string | null
+  status: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  assignee_id: string | null
+  due_date: string | null
+  client_id: string | null
+  page_id: string | null
+  order_index: number
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
