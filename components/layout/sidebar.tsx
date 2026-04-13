@@ -9,24 +9,21 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from './theme-toggle'
+import { PageTree } from './page-tree'
 import {
   LayoutDashboard,
-  FileText,
   CheckSquare,
   Users,
-  PenTool,
   Key,
   Calendar,
   Settings,
   ChevronsLeft,
-  Plus,
   LogOut,
   Sparkles,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Paginas', href: '/pages', icon: FileText },
   { label: 'Tareas', href: '/tasks', icon: CheckSquare },
   { label: 'Clientes', href: '/clients', icon: Users },
   { label: 'Contenido', href: '/content', icon: Calendar },
@@ -100,19 +97,14 @@ export function Sidebar() {
 
         <Separator className="my-3" />
 
-        {/* Quick actions */}
-        <div className="px-1">
-          <p className="mb-1 px-2 text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider">
-            Rapido
-          </p>
-          <button
-            onClick={() => router.push('/pages?new=true')}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nueva pagina</span>
-          </button>
-        </div>
+        {/* Page tree */}
+        <PageTree
+          activePath={
+            pathname.startsWith('/pages/')
+              ? pathname.replace('/pages/', '')
+              : undefined
+          }
+        />
       </ScrollArea>
 
       {/* Footer */}
