@@ -89,6 +89,29 @@ export type Prompt = {
   updated_at: string
 }
 
+export type ContentPlatform = 'instagram' | 'tiktok' | 'facebook' | 'linkedin' | 'x' | 'youtube' | 'threads'
+export type ContentFormat = 'post' | 'reel' | 'story' | 'carousel' | 'video' | 'short' | 'article'
+export type ContentStatus = 'idea' | 'draft' | 'ready' | 'scheduled' | 'published' | 'archived'
+
+export type ContentItem = {
+  id: string
+  workspace_id: string
+  platform: ContentPlatform
+  format: ContentFormat
+  hook: string | null
+  caption: string
+  hashtags: string[]
+  media_urls: string[]
+  status: ContentStatus
+  scheduled_for: string | null
+  published_at: string | null
+  metrics: Record<string, unknown>
+  notes: string | null
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {

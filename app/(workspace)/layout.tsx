@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
 import { WorkspaceInitializer } from '@/components/layout/workspace-initializer'
