@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { updateContentItem, deleteContentItem } from '@/app/(workspace)/content/actions'
+import { generateHook, generateCaption, generateHashtags } from '@/app/(workspace)/content/ai-actions'
+import { useWorkspaceStore } from '@/lib/stores/workspace-store'
 import { MediaUpload } from './media-upload'
 import { PLATFORMS, FORMAT_LABELS, STATUS_CONFIG, getPlatformConfig } from '@/lib/content-config'
 import { Button } from '@/components/ui/button'
@@ -15,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { X, Trash2, ChevronDown, Hash, Calendar } from 'lucide-react'
+import { X, Trash2, ChevronDown, Hash, Calendar, Sparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { ContentItem, ContentPlatform, ContentFormat, ContentStatus } from '@/types/database'
@@ -31,12 +33,17 @@ export function ContentEditor({
   onUpdate: (item: ContentItem) => void
   onDelete: (id: string) => void
 }) {
+  const workspace = useWorkspaceStore((s) => s.workspace)
   const [caption, setCaption] = useState(item.caption)
   const [hook, setHook] = useState(item.hook ?? '')
   const [hashtagsInput, setHashtagsInput] = useState(item.hashtags.join(' '))
   const [notes, setNotes] = useState(item.notes ?? '')
   const [scheduledFor, setScheduledFor] = useState(item.scheduled_for?.slice(0, 16) ?? '')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [generatingHook, setGeneratingHook] = useState(false)
+  const [generatingCaption, setGeneratingCaption] = useState(false)
+  const [generatingHashtags, setGeneratingHashtags] = useState(false)
 
   const platformCfg = getPlatformConfig(item.platform)
   const statusCfg = STATUS_CONFIG[item.status]
@@ -70,6 +77,52 @@ export function ContentEditor({
       toast.error('Error eliminando')
     }
   }, [item.id, onDelete])
+
+  async function handleGenerateHook() {
+    if (!workspace) return
+    setGeneratingHook(true)
+    try {
+      const result = await generateHook(workspace.id, item.platform, item.format, caption || undefined)
+      setHook(result)
+      await saveField('hook', result)
+      toast.success('Hook generado')
+    } catch {
+      toast.error('Error generando hook. Verifica la configuracion de IA.')
+    } finally {
+      setGeneratingHook(false)
+    }
+  }
+
+  async function handleGenerateCaption() {
+    if (!workspace) return
+    setGeneratingCaption(true)
+    try {
+      const result = await generateCaption(workspace.id, item.platform, item.format, hook || undefined)
+      setCaption(result)
+      await saveField('caption', result)
+      toast.success('Caption generado')
+    } catch {
+      toast.error('Error generando caption. Verifica la configuracion de IA.')
+    } finally {
+      setGeneratingCaption(false)
+    }
+  }
+
+  async function handleGenerateHashtags() {
+    if (!workspace) return
+    setGeneratingHashtags(true)
+    try {
+      const result = await generateHashtags(workspace.id, item.platform, hook || undefined, caption || undefined)
+      const text = result.join(' ')
+      setHashtagsInput(text)
+      await saveField('hashtags', result)
+      toast.success('Hashtags generados')
+    } catch {
+      toast.error('Error generando hashtags')
+    } finally {
+      setGeneratingHashtags(false)
+    }
+  }
 
   return (
     <div className="w-[440px] shrink-0 border-l bg-background overflow-y-auto">
@@ -180,7 +233,23 @@ export function ContentEditor({
 
         {/* Hook */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Hook / Titulo</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Hook / Titulo</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 text-[10px] text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+              onClick={handleGenerateHook}
+              disabled={generatingHook}
+            >
+              {generatingHook ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Sparkles className="h-3 w-3" />
+              )}
+              Generar con IA
+            </Button>
+          </div>
           <Input
             value={hook}
             onChange={(e) => {
@@ -193,7 +262,23 @@ export function ContentEditor({
 
         {/* Caption */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Caption / Copy</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Caption / Copy</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 text-[10px] text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+              onClick={handleGenerateCaption}
+              disabled={generatingCaption}
+            >
+              {generatingCaption ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Sparkles className="h-3 w-3" />
+              )}
+              Generar con IA
+            </Button>
+          </div>
           <textarea
             value={caption}
             onChange={(e) => {
@@ -209,10 +294,26 @@ export function ContentEditor({
 
         {/* Hashtags */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            <Hash className="h-3 w-3" />
-            Hashtags
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Hash className="h-3 w-3" />
+              Hashtags
+            </Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 text-[10px] text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+              onClick={handleGenerateHashtags}
+              disabled={generatingHashtags}
+            >
+              {generatingHashtags ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Sparkles className="h-3 w-3" />
+              )}
+              Generar con IA
+            </Button>
+          </div>
           <Input
             value={hashtagsInput}
             onChange={(e) => {
