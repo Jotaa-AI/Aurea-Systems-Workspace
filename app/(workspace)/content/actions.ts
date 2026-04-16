@@ -99,9 +99,16 @@ export async function uploadContentMedia(formData: FormData): Promise<string> {
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
   const path = `content/${fileName}`
 
+  // Convert File to Buffer for server-side upload
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
   const { error } = await supabase.storage
     .from('content-media')
-    .upload(path, file)
+    .upload(path, buffer, {
+      contentType: file.type,
+      upsert: false,
+    })
 
   if (error) throw new Error(error.message)
 

@@ -128,3 +128,14 @@
     @apply font-sans;
   }
 }
+
+/* BlockNote heading size overrides — Notion-like proportions */
+[data-content-type="heading"] {
+  --level: 1.875em !important;
+}
+[data-content-type="heading"][data-level="2"] {
+  --level: 1.5em !important;
+}
+[data-content-type="heading"][data-level="3"] {
+  --level: 1.25em !important;
+}
