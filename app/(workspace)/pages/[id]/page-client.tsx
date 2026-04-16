@@ -3,19 +3,27 @@
 import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePage } from '@/lib/hooks/use-pages'
+import { usePageComments } from '@/lib/hooks/use-page-comments'
 import { updatePage, deletePage } from '../actions'
 import { BlockEditor } from '@/components/editor/block-editor'
 import { IconPicker } from '@/components/editor/icon-picker'
 import { Breadcrumbs } from '@/components/editor/breadcrumbs'
 import { Topbar } from '@/components/layout/topbar'
 import { Button } from '@/components/ui/button'
+import { PageCommentsPanel } from '@/components/pages/page-comments'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Star, MoreHorizontal, Trash2, Loader2 } from 'lucide-react'
+import {
+  Star,
+  MoreHorizontal,
+  Trash2,
+  Loader2,
+  MessageSquare,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -27,10 +35,16 @@ export function PageClient({
   ancestors: { id: string; title: string; icon: string | null }[]
 }) {
   const { data: page, isLoading } = usePage(pageId)
+  const { data: comments = [] } = usePageComments(pageId)
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const unresolvedCount = comments.filter(
+    (c) => !c.parent_id && !c.resolved
+  ).length
 
   const handleTitleChange = useCallback(() => {
     if (!titleRef.current) return
@@ -93,7 +107,8 @@ export function PageClient({
   return (
     <>
       <Topbar />
-      <div className="mx-auto max-w-3xl px-8 py-6">
+      <div className="flex">
+        <div className="flex-1 min-w-0 mx-auto max-w-3xl px-8 py-6">
         {/* Breadcrumbs */}
         <div className="mb-6">
           <Breadcrumbs ancestors={ancestors} />
@@ -124,6 +139,18 @@ export function PageClient({
               {isSaving && (
                 <span className="text-xs text-muted-foreground mr-1">Guardando...</span>
               )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => setCommentsOpen((v) => !v)}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {unresolvedCount > 0 && (
+                  <span className="text-xs font-medium">{unresolvedCount}</span>
+                )}
+              </Button>
 
               <Button
                 variant="ghost"
@@ -161,6 +188,13 @@ export function PageClient({
 
         {/* Editor */}
         <BlockEditor pageId={pageId} initialContent={page.content} />
+        </div>
+
+        <PageCommentsPanel
+          pageId={pageId}
+          open={commentsOpen}
+          onOpenChange={setCommentsOpen}
+        />
       </div>
     </>
   )

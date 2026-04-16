@@ -163,6 +163,24 @@ export type Process = {
   updated_at: string
 }
 
+// ── Page comments (async discussions) ────────────────────
+
+export type PageComment = {
+  id: string
+  workspace_id: string
+  page_id: string
+  parent_id: string | null
+  author_id: string | null
+  author_name: string
+  author_email: string | null
+  body: string
+  resolved: boolean
+  resolved_at: string | null
+  resolved_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
