@@ -112,6 +112,57 @@ export type ContentItem = {
   updated_at: string
 }
 
+// ── Processes / SOPs (BPMN) ──────────────────────────────
+
+export type ProcessCategory =
+  | 'general'
+  | 'ventas'
+  | 'onboarding'
+  | 'operaciones'
+  | 'contenido'
+  | 'soporte'
+  | 'rrhh'
+  | 'finanzas'
+
+export type ProcessStatus = 'draft' | 'active' | 'review' | 'archived'
+
+export type StepType = 'start' | 'task' | 'decision' | 'subprocess' | 'end'
+
+export type ProcessStep = {
+  id: string
+  type: StepType
+  title: string
+  description: string
+  responsible: string
+  inputs: string[]
+  outputs: string[]
+  tools: string[]
+  estimated_minutes: number | null
+  notes: string
+  /** Only for decision type: branches */
+  conditions?: { label: string; nextStepId: string }[]
+}
+
+export type Process = {
+  id: string
+  workspace_id: string
+  parent_id: string | null
+  title: string
+  description: string
+  category: ProcessCategory
+  status: ProcessStatus
+  version: number
+  owner_id: string | null
+  icon: string | null
+  steps: ProcessStep[]
+  content: unknown
+  tags: string[]
+  estimated_duration_minutes: number | null
+  is_template: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {

@@ -20,6 +20,7 @@ import {
   ChevronsLeft,
   LogOut,
   Sparkles,
+  GitBranchPlus,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { label: 'Tareas', href: '/tasks', icon: CheckSquare },
   { label: 'Clientes', href: '/clients', icon: Users },
   { label: 'Contenido', href: '/content', icon: Calendar },
+  { label: 'Procesos', href: '/procesos', icon: GitBranchPlus },
   { label: 'Prompts', href: '/prompts', icon: Sparkles },
   { label: 'Credenciales', href: '/credentials', icon: Key },
   { label: 'Ajustes', href: '/settings', icon: Settings },
