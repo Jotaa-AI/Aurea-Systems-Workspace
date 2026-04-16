@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
 import { WorkspaceInitializer } from '@/components/layout/workspace-initializer'
+import { SearchProvider } from '@/components/search/search-provider'
 
 async function getOrCreateWorkspace() {
   const supabase = await createServiceClient()
@@ -36,6 +37,7 @@ export default async function WorkspaceLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <WorkspaceInitializer workspace={workspace} />
+      <SearchProvider />
       <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
