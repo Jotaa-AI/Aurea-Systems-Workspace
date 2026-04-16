@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { updateTask, deleteTask } from '@/app/(workspace)/tasks/actions'
+import { useQuery } from '@tanstack/react-query'
+import { useWorkspaceStore } from '@/lib/stores/workspace-store'
+import { updateTask, deleteTask, fetchWorkspaceUsers } from '@/app/(workspace)/tasks/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { X, Trash2, ChevronDown } from 'lucide-react'
+import { X, Trash2, ChevronDown, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
@@ -40,10 +42,19 @@ export function TaskDetailPanel({
   onUpdate: (task: Task) => void
   onDelete: (taskId: string) => void
 }) {
+  const workspace = useWorkspaceStore((s) => s.workspace)
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description ?? '')
   const [dueDate, setDueDate] = useState(task.due_date ?? '')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['workspace-users', workspace?.id],
+    queryFn: () => fetchWorkspaceUsers(workspace!.id),
+    enabled: !!workspace,
+  })
+
+  const assignedUser = users.find((u) => u.id === task.assignee_id)
 
   const saveField = useCallback(
     async (field: string, value: unknown) => {
@@ -166,6 +177,34 @@ export function TaskDetailPanel({
               saveField('due_date', e.target.value || null)
             }}
           />
+        </div>
+
+        {/* Assignee */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Responsable</Label>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm w-full justify-between hover:bg-accent transition-colors">
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                {assignedUser ? (
+                  <span>{assignedUser.email.split('@')[0]}</span>
+                ) : (
+                  <span className="text-muted-foreground">Sin asignar</span>
+                )}
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={() => saveField('assignee_id', null)}>
+                <span className="text-muted-foreground">Sin asignar</span>
+              </DropdownMenuItem>
+              {users.map((u) => (
+                <DropdownMenuItem key={u.id} onClick={() => saveField('assignee_id', u.id)}>
+                  {u.email.split('@')[0]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <Separator />

@@ -88,6 +88,40 @@ export async function deleteTask(taskId: string): Promise<void> {
   revalidatePath('/tasks')
 }
 
+export type WorkspaceUser = {
+  id: string
+  email: string
+}
+
+export async function fetchWorkspaceUsers(workspaceId: string): Promise<WorkspaceUser[]> {
+  const supabase = await createServiceClient()
+
+  // Get workspace members
+  const { data: members } = await supabase
+    .from('workspace_members')
+    .select('user_id')
+    .eq('workspace_id', workspaceId)
+
+  if (!members || members.length === 0) {
+    // Fallback: get users from Supabase auth (via service client)
+    const { data: { users } } = await supabase.auth.admin.listUsers()
+    const allowedEmails = (process.env.ALLOWED_EMAILS ?? '').split(',').map(e => e.trim().toLowerCase())
+    return users
+      .filter(u => u.email && allowedEmails.includes(u.email.toLowerCase()))
+      .map(u => ({ id: u.id, email: u.email! }))
+  }
+
+  // Get user details for each member
+  const users: WorkspaceUser[] = []
+  for (const member of members) {
+    const { data: { user } } = await supabase.auth.admin.getUserById(member.user_id)
+    if (user?.email) {
+      users.push({ id: user.id, email: user.email })
+    }
+  }
+  return users
+}
+
 export async function reorderTasks(
   updates: { id: string; status: string; order_index: number }[]
 ): Promise<void> {
