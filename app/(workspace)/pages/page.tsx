@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { usePages, buildPageTree } from '@/lib/hooks/use-pages'
+import { usePages } from '@/lib/hooks/use-pages'
 import { useWorkspaceStore } from '@/lib/stores/workspace-store'
-import { createPage, deletePage } from './actions'
+import { deletePage } from './actions'
 import { Topbar } from '@/components/layout/topbar'
 import { Button } from '@/components/ui/button'
+import { TemplateGallery } from '@/components/pages/template-gallery'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +23,6 @@ import {
   Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Page } from '@/types/database'
@@ -30,18 +31,9 @@ export default function PagesIndex() {
   const { data: pages, isLoading } = usePages()
   const workspace = useWorkspaceStore((s) => s.workspace)
   const router = useRouter()
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   const rootPages = pages?.filter((p) => !p.parent_id) ?? []
-
-  async function handleCreate() {
-    if (!workspace) return
-    try {
-      const newPage = await createPage(workspace.id)
-      router.push(`/pages/${newPage.id}`)
-    } catch {
-      toast.error('Error creando pagina')
-    }
-  }
 
   async function handleDelete(e: React.MouseEvent, pageId: string) {
     e.stopPropagation()
@@ -56,10 +48,11 @@ export default function PagesIndex() {
   return (
     <>
       <Topbar title="Paginas" />
+      <TemplateGallery open={galleryOpen} onOpenChange={setGalleryOpen} />
       <div className="mx-auto max-w-4xl px-8 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold tracking-tight">Paginas</h1>
-          <Button onClick={handleCreate} size="sm">
+          <Button onClick={() => setGalleryOpen(true)} size="sm">
             <Plus className="mr-2 h-4 w-4" />
             Nueva pagina
           </Button>
@@ -75,7 +68,7 @@ export default function PagesIndex() {
             <p className="text-muted-foreground mb-4">
               No hay paginas todavia
             </p>
-            <Button onClick={handleCreate} variant="outline" size="sm">
+            <Button onClick={() => setGalleryOpen(true)} variant="outline" size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Crear primera pagina
             </Button>

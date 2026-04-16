@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { usePages, buildPageTree, type PageNode } from '@/lib/hooks/use-pages'
 import { useRealtimePages } from '@/lib/hooks/use-realtime-pages'
 import { useWorkspaceStore } from '@/lib/stores/workspace-store'
-import { createPage } from '@/app/(workspace)/pages/actions'
+import { TemplateGallery } from '@/components/pages/template-gallery'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,27 +15,27 @@ import {
   Star,
   Loader2,
 } from 'lucide-react'
+
 function PageTreeItem({
   page,
   depth = 0,
   activePath,
+  onAddChild,
 }: {
   page: PageNode
   depth?: number
   activePath?: string
+  onAddChild: (parentId: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const router = useRouter()
-  const workspace = useWorkspaceStore((s) => s.workspace)
   const isActive = activePath === page.id
   const hasChildren = page.children.length > 0
 
-  async function handleAddChild(e: React.MouseEvent) {
+  function handleAddChild(e: React.MouseEvent) {
     e.stopPropagation()
-    if (!workspace) return
-    const newPage = await createPage(workspace.id, page.id)
     setExpanded(true)
-    router.push(`/pages/${newPage.id}`)
+    onAddChild(page.id)
   }
 
   return (
@@ -94,6 +94,7 @@ function PageTreeItem({
               page={child}
               depth={depth + 1}
               activePath={activePath}
+              onAddChild={onAddChild}
             />
           ))}
         </div>
@@ -104,18 +105,18 @@ function PageTreeItem({
 
 export function PageTree({ activePath }: { activePath?: string }) {
   const { data: pages, isLoading } = usePages()
-  const workspace = useWorkspaceStore((s) => s.workspace)
   const router = useRouter()
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [galleryParentId, setGalleryParentId] = useState<string | null>(null)
 
   useRealtimePages()
 
   const tree = pages ? buildPageTree(pages) : []
   const favorites = pages?.filter((p) => p.is_favorite) ?? []
 
-  async function handleCreatePage() {
-    if (!workspace) return
-    const newPage = await createPage(workspace.id)
-    router.push(`/pages/${newPage.id}`)
+  function openGallery(parentId: string | null) {
+    setGalleryParentId(parentId)
+    setGalleryOpen(true)
   }
 
   if (isLoading) {
@@ -128,6 +129,12 @@ export function PageTree({ activePath }: { activePath?: string }) {
 
   return (
     <div className="space-y-3">
+      <TemplateGallery
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        parentId={galleryParentId}
+      />
+
       {/* Favorites */}
       {favorites.length > 0 && (
         <div>
@@ -164,7 +171,7 @@ export function PageTree({ activePath }: { activePath?: string }) {
             variant="ghost"
             size="icon"
             className="h-5 w-5"
-            onClick={handleCreatePage}
+            onClick={() => openGallery(null)}
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -174,11 +181,12 @@ export function PageTree({ activePath }: { activePath?: string }) {
             key={page.id}
             page={page}
             activePath={activePath}
+            onAddChild={(parentId) => openGallery(parentId)}
           />
         ))}
         {tree.length === 0 && (
           <button
-            onClick={handleCreatePage}
+            onClick={() => openGallery(null)}
             className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground/50 hover:bg-sidebar-accent/50 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />

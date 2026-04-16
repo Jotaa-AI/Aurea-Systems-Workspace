@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getTemplate } from '@/lib/page-templates'
 import type { Page } from '@/types/database'
 
 export async function createPage(workspaceId: string, parentId?: string | null) {
@@ -14,6 +15,35 @@ export async function createPage(workspaceId: string, parentId?: string | null) 
       parent_id: parentId ?? null,
       title: 'Sin titulo',
       content: [],
+      is_favorite: false,
+    } as any)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/pages')
+  return data
+}
+
+export async function createPageFromTemplate(
+  workspaceId: string,
+  templateId: string,
+  parentId?: string | null
+) {
+  const template = getTemplate(templateId)
+  if (!template) throw new Error('Plantilla no encontrada')
+
+  const supabase = await createServiceClient()
+
+  const { data, error } = await supabase
+    .from('pages')
+    .insert({
+      workspace_id: workspaceId,
+      parent_id: parentId ?? null,
+      title: template.defaultTitle,
+      icon: template.icon,
+      content: template.content,
       is_favorite: false,
     } as any)
     .select()
